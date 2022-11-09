@@ -12,10 +12,10 @@ L_H_BOTTOM = [145]  # right eye lower landmark
 L_H_LEFT = [33]  # right eye right most landmark
 L_H_RIGHT = [133]  # right eye left most landmark
 
-R_H_TOP = [257]  # left eye upper landmark
-R_H_BOTTOM = [253]  # left eye lower landmark
-R_H_LEFT = [463]  # left eye right most landmark
-R_H_RIGHT = [359]  # left eye left most landmark
+R_H_TOP = [443]  # left eye upper landmark
+R_H_BOTTOM = [450]  # left eye lower landmark
+R_H_LEFT = [362]  # left eye right most landmark
+R_H_RIGHT = [263]  # left eye left most landmark
 
 
 def euclidean_distance(point1, point2):
@@ -25,18 +25,27 @@ def euclidean_distance(point1, point2):
     return distance
 
 
-def iris_position(iris_center, right_point, left_point):
-    center_to_right_dist = euclidean_distance(iris_center, right_point)
-    total_distance = euclidean_distance(right_point, left_point)
-    ratio = center_to_right_dist/total_distance
-    iris_position = ""
-    if ratio <= 0.42:
-        iris_position = "right"
-    elif ratio > 0.42 and ratio <= 0.57:
-        iris_position = "center"
+def iris_position(iris_center, top_point, bottom_point, right_point, left_point):
+    vertical_pos = euclidean_distance(
+        iris_center, top_point) / euclidean_distance(top_point, bottom_point)
+
+    horizontal_pos = euclidean_distance(
+        iris_center, right_point) / euclidean_distance(right_point, left_point)
+
+    iris_position = "center"
+
+    if abs(vertical_pos - 0.5) < abs(horizontal_pos - 0.5):
+        if horizontal_pos < 0.42:
+            iris_position = "right"
+        elif horizontal_pos > 0.57:
+            iris_position = "left"
     else:
-        iris_position = "left"
-    return iris_position, ratio
+        if vertical_pos < 0.48:
+            iris_position = "top"
+        elif vertical_pos > 0.57:
+            iris_position = "bottom"
+
+    return iris_position
 
 
 mp_face_mesh = mp.solutions.face_mesh
@@ -86,8 +95,13 @@ with mp_face_mesh.FaceMesh(
             cv.circle(frame, mesh_points[R_H_LEFT]
                       [0], 3, (255, 0, 0), -1, cv.LINE_AA)
 
-            iris_pos, ratio = iris_position(
-                center_right, mesh_points[R_H_RIGHT][0], mesh_points[R_H_LEFT][0])
+            iris_pos = iris_position(
+                center_right,
+                mesh_points[R_H_TOP][0],
+                mesh_points[R_H_BOTTOM][0],
+                mesh_points[R_H_RIGHT][0],
+                mesh_points[R_H_LEFT][0]
+            )
 
             print(iris_pos)
         cv.imshow("img", frame)
