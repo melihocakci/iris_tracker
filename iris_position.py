@@ -7,10 +7,15 @@ import math
 RIGHT_IRIS = [474, 475, 476, 477]
 LEFT_IRIS = [469, 470, 471, 472]
 
+L_H_TOP = [159]  # right eye upper landmark
+L_H_BOTTOM = [145]  # right eye lower landmark
 L_H_LEFT = [33]  # right eye right most landmark
 L_H_RIGHT = [133]  # right eye left most landmark
-R_H_LEFT = [362]  # left eye right most landmark
-R_H_RIGHT = [263]  # left eye left most landmark
+
+R_H_TOP = [257]  # left eye upper landmark
+R_H_BOTTOM = [253]  # left eye lower landmark
+R_H_LEFT = [463]  # left eye right most landmark
+R_H_RIGHT = [359]  # left eye left most landmark
 
 
 def euclidean_distance(point1, point2):
@@ -55,12 +60,9 @@ with mp_face_mesh.FaceMesh(
         results = face_mesh.process(rgb_frame)
 
         if results.multi_face_landmarks:
-            mesh_points = np.array(
-                [
-                    np.multiply([p.x, p.y], [img_w, img_h]).astype(int)
-                    for p in results.multi_face_landmarks[0].landmark
-                ]
-            )
+            mesh_points = np.array([
+                np.multiply([p.x, p.y], [img_w, img_h]).astype(int)
+                for p in results.multi_face_landmarks[0].landmark])
 
             (l_cx, l_cy), l_radius = cv.minEnclosingCircle(
                 mesh_points[LEFT_IRIS])
@@ -75,14 +77,17 @@ with mp_face_mesh.FaceMesh(
             cv.circle(frame, center_right, int(r_radius),
                       (255, 0, 255), 1, cv.LINE_AA)
 
+            cv.circle(frame, mesh_points[R_H_TOP]
+                      [0], 3, (0, 0, 255), -1, cv.LINE_AA)
+            cv.circle(frame, mesh_points[R_H_BOTTOM]
+                      [0], 3, (0, 255, 0), -1, cv.LINE_AA)
             cv.circle(frame, mesh_points[R_H_RIGHT]
-                      [0], 3, (255, 255, 255), -1, cv.LINE_AA)
-            cv.circle(frame, mesh_points[R_H_LEFT]
                       [0], 3, (0, 255, 255), -1, cv.LINE_AA)
+            cv.circle(frame, mesh_points[R_H_LEFT]
+                      [0], 3, (255, 0, 0), -1, cv.LINE_AA)
 
             iris_pos, ratio = iris_position(
-                center_right, mesh_points[R_H_RIGHT][0], mesh_points[R_H_LEFT][0]
-            )
+                center_right, mesh_points[R_H_RIGHT][0], mesh_points[R_H_LEFT][0])
 
             print(iris_pos)
         cv.imshow("img", frame)
