@@ -81,6 +81,11 @@ with mp_face_mesh.FaceMesh(
             center_left = np.array([l_cx, l_cy], dtype=np.int32)
             center_right = np.array([r_cx, r_cy], dtype=np.int32)
 
+            mesh_points[443][0] = int(
+                (mesh_points[443][0] + mesh_points[257][0]) / 2)
+            mesh_points[443][1] = int(
+                (mesh_points[443][1] + mesh_points[257][1]) / 2)
+
             cv.circle(frame, center_left, int(l_radius),
                       (255, 0, 255), 1, cv.LINE_AA)
             cv.circle(frame, center_right, int(r_radius),
