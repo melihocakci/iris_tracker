@@ -1,9 +1,14 @@
+import socket
 import cv2 as cv
 import numpy as np
 import mediapipe as mp
 import math
 import time
 
+UDP_IP = "192.168.4.1"
+UDP_PORT = 8888
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
 
 RIGHT_IRIS = [474, 475, 476, 477]
 LEFT_IRIS = [469, 470, 471, 472]
@@ -21,6 +26,9 @@ R_H_LEFT = [362]  # left eye right most landmark
 R_H_RIGHT = [263]  # left eye left most landmark
 R_H_EYELID_TOP = [386]  # left eyelid upper landmark
 R_H_EYELID_BOTTOM = [374]  # left eyelid lower landmark
+
+
+COMMANDS = {"top": "1", "bottom": "2", "right": "3", "left": "4", "stop": "5"}
 
 
 def euclidean_distance(point1, point2):
@@ -199,24 +207,31 @@ with mp_face_mesh.FaceMesh(
                     check_second_blink = False
 
                 # if the first blink is too old reset the first blink
-                if first_blink and time.time() - first_blink_time > 3:
+                if first_blink and time.time() - first_blink_time > 5:
                     first_blink = False
                     check_second_blink = False
 
                 print(command)
-                    
+
+                if power:
+                    if command != "blink" and command != "center":
+                        sock.sendto(
+                            bytes(COMMANDS[command], "utf-8"), (UDP_IP, UDP_PORT))
+                else:
+                    sock.sendto(
+                        bytes(COMMANDS["stop"], "utf-8"), (UDP_IP, UDP_PORT))
 
             if power:
                 cv.putText(frame, "POWER ON", (50, 50),
                            cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                 cv.putText(frame, command, (10, 30),
-                        cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv.LINE_AA)
+                           cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv.LINE_AA)
             else:
                 cv.putText(frame, "POWER OFF", (50, 50),
                            cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
         cv.imshow("img", frame)
-        key = cv.waitKey(20)
+        key = cv.waitKey(100)
         if key == ord("q"):
             break
 cap.release()
